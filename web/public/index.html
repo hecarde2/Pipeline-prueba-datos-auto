@@ -59,7 +59,7 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 .bubble-wrap{display:flex;flex-direction:column;gap:10px}
 .bub{position:relative;padding:14px 20px;border-radius:22px;background:linear-gradient(135deg,#b59f5b,#8c7a3d);color:#fff;white-space:normal;word-break:break-word;box-shadow:0 40px 70px -60px rgba(140,122,61,.9)}
 .msg.ass .bub{background:linear-gradient(180deg,rgba(255,255,255,.98),#f9f6f1);color:var(--text);border:1px solid var(--border);box-shadow:none}
-.twrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:#fff}
+.twrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:#fff;margin-top:10px}
 .twrap table{min-width:680px}
 .twrap th{background:linear-gradient(90deg,rgba(181,159,91,.12),transparent)}
 .chat-foot{display:flex;gap:12px;padding:18px 30px;border-top:1px solid var(--border);background:linear-gradient(180deg,transparent,rgba(181,159,91,.08))}
@@ -67,7 +67,7 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 .chat-input:focus{outline:none;border-color:rgba(181,159,91,.9);box-shadow:0 0 0 4px rgba(181,159,91,.12)}
 .btn-sm{padding:12px 24px;border-radius:999px;border:none;background:linear-gradient(90deg,#b59f5b,#8c7a3d);color:#fff;font-weight:600;cursor:pointer}
 .ghost{padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:transparent;cursor:pointer}
-.typing{display:none;align-items:center;gap:8px;color:var(--sub)}
+.typing{display:none;align-items:center;gap:8px;color:var(--sub);padding:0 32px}
 .typing.active{display:flex}
 .dot-typing{width:6px;height:6px;border-radius:50%;background:var(--gold2);animation:pulse 1s infinite}
 .dot-typing:nth-child(2){animation-delay:.15s}
@@ -96,7 +96,7 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
         <button class="btn-sm" id="openChat">Chatbot IA</button>
         <button class="ghost" id="ecsv" style="display:none">Descargar CSV</button>
         <button class="ghost" id="epdf" style="display:none">Descargar PDF</button>
-        <span class="pill" id="who"></span>
+        <span id="who"></span>
         <button class="ghost" id="out">Salir</button>
       </div>
     </nav>
@@ -109,35 +109,19 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
       <div class="kpi"><small>Calidad</small><h2 id="k4">-</h2></div>
     </section>
     <section class="grid">
-      <div class="panel">
-        <h3>Mapa sísmico</h3>
-        <p>Distribución geográfica en tiempo real</p>
-        <div class="panel-body"><div id="map"></div></div>
-      </div>
-      <div class="panel">
-        <h3>Top regiones</h3>
-        <p>Mayor actividad sísmica</p>
-        <div class="panel-body"><div class="list" id="rl"></div></div>
-      </div>
+      <div class="panel"><h3>Mapa sísmico</h3><p>Distribución geográfica</p><div class="panel-body"><div id="map"></div></div></div>
+      <div class="panel"><h3>Top regiones</h3><p>Mayor actividad</p><div class="panel-body"><div class="list" id="rl"></div></div></div>
     </section>
     <section class="grid">
-      <div class="panel">
-        <h3>Distribución por magnitud</h3>
-        <p>Frecuencia por rango</p>
-        <div class="panel-body"><canvas id="mc"></canvas></div>
-      </div>
-      <div class="panel">
-        <h3>Actividad por hora</h3>
-        <p>Últimas 48 horas</p>
-        <div class="panel-body"><canvas id="hc"></canvas></div>
-      </div>
+      <div class="panel"><h3>Distribución por magnitud</h3><p>Frecuencia por rango</p><div class="panel-body"><canvas id="mc"></canvas></div></div>
+      <div class="panel"><h3>Actividad por hora</h3><p>Últimas 48 horas</p><div class="panel-body"><canvas id="hc"></canvas></div></div>
     </section>
     <div class="panel">
       <h3>Registro de eventos</h3>
       <p>Datos desde gold.events</p>
       <div class="panel-body">
-        <div style="display:flex;gap:10px;margin-bottom:14px"><input id="fm" placeholder="Mag mínima" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:#faf7f2"><button class="btn-sm" id="af">Aplicar filtro</button></div>
-        <div class="table"><table><thead><tr><th>Fecha / Hora</th><th>Magnitud</th><th>Tipo</th><th>Ubicación</th><th>Región</th><th>Profundidad</th><th>Latitud</th><th>Longitud</th></tr></thead><tbody id="eb"></tbody></table></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px"><input id="fm" placeholder="Mag mínima" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:#faf7f2"><button class="btn-sm" id="af">Aplicar</button></div>
+        <div class="table"><table><thead><tr><th>Fecha/Hora</th><th>Magnitud</th><th>Tipo</th><th>Ubicación</th><th>Región</th><th>Profundidad</th><th>Lat</th><th>Lon</th></tr></thead><tbody id="eb"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -145,18 +129,12 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 <div id="chatOverlay">
   <div class="chat-modal">
     <div class="chat-head">
-      <div class="chat-head-title">
-        <div style="display:flex;align-items:center;gap:12px"><strong>Asistente IA</strong><span class="chat-badge">Gold Analytics</span></div>
-        <small>Consultas en lenguaje natural sobre datos sísmicos</small>
-      </div>
+      <div class="chat-head-title"><div style="display:flex;align-items:center;gap:12px"><strong>Asistente IA</strong><span class="chat-badge">Gold Analytics</span></div><small>Consultas en lenguaje natural sobre gold.events</small></div>
       <button class="ghost" id="cc">Cerrar</button>
     </div>
     <div class="chat-body" id="cb"></div>
     <div class="typing" id="typing"><div class="dot-typing"></div><div class="dot-typing"></div><div class="dot-typing"></div><span>Pensando...</span></div>
-    <form class="chat-foot" id="cf">
-      <input class="chat-input" id="ci" placeholder="Pregunta sobre eventos, regiones, magnitudes..." autocomplete="off">
-      <button class="btn-sm" type="submit">Enviar</button>
-    </form>
+    <form class="chat-foot" id="cf"><input class="chat-input" id="ci" placeholder="Pregunta sobre eventos..." autocomplete="off"><button class="btn-sm" type="submit">Enviar</button></form>
   </div>
 </div>
 <script>
@@ -164,30 +142,23 @@ const $=id=>document.getElementById(id);
 function gt(){return sessionStorage.getItem('t')||sessionStorage.getItem('sw_t');}
 function gr(){return sessionStorage.getItem('r')||sessionStorage.getItem('sw_r');}
 function gu(){return sessionStorage.getItem('u2')||sessionStorage.getItem('sw_u');}
-let tk=gt(),rl=gr(),un=gu();
-if(tk&&rl&&un)go();else sl();
+let tk=gt(),rl=gr(),un=gu();if(tk&&rl&&un)go();else sl();
 function sl(){$('login').style.display='flex';$('app').style.display='none';sessionStorage.clear();}
 function go(){$('login').style.display='none';$('app').style.display='block';$('who').textContent=un+' · '+rl;if(rl==='admin'){$('ecsv').style.display='inline';$('epdf').style.display='inline';}im();ld();}
-$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const b=$('lb'),t=$('lbt');b.disabled=true;t.textContent='Entrando...';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,password:$('p').value})});if(!r.ok){const er=await r.json().catch(()=>({}));throw new Error(er.detail||'Error');}const d=await r.json();tk=d.access_token;rl=d.role;un=$('u').value;sessionStorage.setItem('t',tk);sessionStorage.setItem('r',rl);sessionStorage.setItem('u2',un);sessionStorage.setItem('sw_t',tk);sessionStorage.setItem('sw_r',rl);sessionStorage.setItem('sw_u',un);setTimeout(go,200);}catch(ex){$('le').textContent=ex.message;}finally{b.disabled=false;t.textContent='Iniciar sesión';}};
+$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const b=$('lb'),t=$('lbt');b.disabled=true;t.textContent='Entrando...';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,password:$('p').value})});if(!r.ok){const er=await r.json().catch(()=>({}));throw new Error(er.detail||'Error');}const d=await r.json();tk=d.access_token;rl=d.role;un=$('u').value;sessionStorage.setItem('t',tk);sessionStorage.setItem('r',rl);sessionStorage.setItem('u2',un);sessionStorage.setItem('sw_t',tk);sessionStorage.setItem('sw_r',rl);sessionStorage.setItem('sw_u',un);setTimeout(go,150);}catch(ex){$('le').textContent=ex.message;}finally{b.disabled=false;t.textContent='Iniciar sesión';}};
 $('out').onclick=sl;
-$('openChat').onclick=()=>{$('chatOverlay').style.display='flex';setTimeout(()=>$('ci').focus(),150);};
+$('openChat').onclick=()=>{$('chatOverlay').style.display='flex';setTimeout(()=>$('ci').focus(),100);};
 $('cc').onclick=()=>{$('chatOverlay').style.display='none';};
 $('chatOverlay').onclick=e=>{if(e.target.id==='chatOverlay')$('chatOverlay').style.display='none';};
-$('ecsv').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.csv';a.click();};
-$('epdf').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export/pdf',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.html';a.click();};
-async function api(p,o={}){const t=gt()||tk;if(!t){sl();throw new Error('x');}const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,...(o.headers||{})}});if(r.status===401){sl();throw new Error('x');}return r.json();}
+$('ecsv').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch.csv';a.click();};
+$('epdf').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export/pdf',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch.html';a.click();};
+async function api(p,o={}){const t=gt()||tk;if(!t){sl();throw new Error('x');}const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,...(o.headers||{})}});if(r.status===401){sl();throw new Error('x');}const ct=r.headers.get('content-type')||'';if(ct.includes('application/json'))return r.json();return r.text();}
 let map,mk=[],mc,hc;
 function im(){if(map)return;map=L.map('map',{zoomControl:true}).setView([20,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:''}).addTo(map);}
-async function ld(){const mg=$('fm').value?('&min_mag='+$('fm').value):'';const [k,ev,s,ts]=await Promise.all([api('/api/kpis'),api('/api/events?limit=160'+mg),api('/api/stats/summary'),api('/api/stats/timeseries?hours=48')]);$('k1').textContent=k.events_24h??0;$('k2').textContent=k.max_magnitude!=null?Number(k.max_magnitude).toFixed(2):'-';$('k3').textContent=k.avg_magnitude!=null?Number(k.avg_magnitude).toFixed(2):'-';$('k4').textContent=k.quality_score!=null?k.quality_score+'%':'-';
-$('eb').innerHTML='';mk.forEach(m=>map.removeLayer(m));mk=[];(ev.items||[]).forEach(it=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+(it.event_time?new Date(it.event_time).toLocaleString('es-ES'):'-')+'</td><td>'+(it.magnitude!=null?Number(it.magnitude).toFixed(2):'-')+'</td><td>'+(it.mag_type||'-')+'</td><td>'+(it.place||'-')+'</td><td>'+(it.region||'-')+'</td><td>'+(it.depth_km!=null?Number(it.depth_km).toFixed(1):'-')+'</td><td>'+(it.latitude!=null?Number(it.latitude).toFixed(3):'-')+'</td><td>'+(it.longitude!=null?Number(it.longitude).toFixed(3):'-')+'</td>';$('eb').appendChild(tr);if(it.latitude&&it.longitude){const m=L.circleMarker([Number(it.latitude),Number(it.longitude)],{radius:Math.max(4,(Number(it.magnitude)||2)*2.1),color:'#8c7a3d',fillColor:'#b59f5b',fillOpacity:.78}).addTo(map);mk.push(m);}});
-if(mk.length)map.fitBounds(L.featureGroup(mk).getBounds().pad(.24));
-$('rl').innerHTML='';(s.top_regions||[]).forEach((r,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML='<div><strong>'+(i+1)+'.</strong> '+r.region+'</div><span>'+r.events+'</span>';$('rl').appendChild(d);});
-if(mc)mc.destroy();mc=new Chart($('mc'),{type:'bar',data:{labels:(s.by_magnitude||[]).map(x=>x.mag_bucket),datasets:[{data:(s.by_magnitude||[]).map(x=>x.events),backgroundColor:'rgba(181,159,91,.88)',borderRadius:10,maxBarThickness:38}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});
-if(hc)hc.destroy();hc=new Chart($('hc'),{type:'line',data:{labels:(ts||[]).map(x=>(x.hour||'').slice(11,16)),datasets:[{label:'Eventos',data:(ts||[]).map(x=>x.events),borderColor:'#b59f5b',backgroundColor:'rgba(181,159,91,.16)',fill:true,tension:.36,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});
-}
+async function ld(){const mg=$('fm').value?('&min_mag='+$('fm').value):'';const [k,ev,s,ts]=await Promise.all([api('/api/kpis'),api('/api/events?limit=160'+mg),api('/api/stats/summary'),api('/api/stats/timeseries?hours=48')]);$('k1').textContent=k.events_24h??0;$('k2').textContent=k.max_magnitude!=null?Number(k.max_magnitude).toFixed(2):'-';$('k3').textContent=k.avg_magnitude!=null?Number(k.avg_magnitude).toFixed(2):'-';$('k4').textContent=k.quality_score!=null?k.quality_score+'%':'-';$('eb').innerHTML='';mk.forEach(m=>map.removeLayer(m));mk=[];(ev.items||[]).forEach(it=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+(it.event_time?new Date(it.event_time).toLocaleString('es-ES'):'-')+'</td><td>'+(it.magnitude!=null?Number(it.magnitude).toFixed(2):'-')+'</td><td>'+(it.mag_type||'-')+'</td><td>'+(it.place||'-')+'</td><td>'+(it.region||'-')+'</td><td>'+(it.depth_km!=null?Number(it.depth_km).toFixed(1):'-')+'</td><td>'+(it.latitude!=null?Number(it.latitude).toFixed(3):'-')+'</td><td>'+(it.longitude!=null?Number(it.longitude).toFixed(3):'-')+'</td>';$('eb').appendChild(tr);if(it.latitude&&it.longitude){const m=L.circleMarker([Number(it.latitude),Number(it.longitude)],{radius:Math.max(4,(Number(it.magnitude)||2)*2),color:'#8c7a3d',fillColor:'#b59f5b',fillOpacity:.8}).addTo(map);mk.push(m);}});if(mk.length)map.fitBounds(L.featureGroup(mk).getBounds().pad(.25));$('rl').innerHTML='';(s.top_regions||[]).forEach((r,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML='<div><strong>'+(i+1)+'.</strong> '+r.region+'</div><span>'+r.events+'</span>';$('rl').appendChild(d);});if(mc)mc.destroy();mc=new Chart($('mc'),{type:'bar',data:{labels:(s.by_magnitude||[]).map(x=>x.mag_bucket),datasets:[{data:(s.by_magnitude||[]).map(x=>x.events),backgroundColor:'rgba(181,159,91,.9)',borderRadius:10,maxBarThickness:40}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});if(hc)hc.destroy();hc=new Chart($('hc'),{type:'line',data:{labels:(ts||[]).map(x=>(x.hour||'').slice(11,16)),datasets:[{label:'Eventos',data:(ts||[]).map(x=>x.events),borderColor:'#b59f5b',backgroundColor:'rgba(181,159,91,.14)',fill:true,tension:.35,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});}
 $('af').onclick=ld;
-function addMsg(text,cls){const m=document.createElement('div');m.className='msg '+cls;const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});m.innerHTML='<div class="msg-meta">'+(cls==='user'?'Tú':'Asistente IA')+' · '+now+'</div><div class="bubble-wrap"><div class="bub">'+text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div></div>';$('cb').appendChild(m);$('cb').scrollTop=$('cb').scrollHeight;}
-$('cf').onsubmit=async e=>{e.preventDefault();const q=$('ci').value.trim();if(!q)return;addMsg(q,'user');$('ci').value='';$('typing').classList.add('active');$('cb').scrollTop=$('cb').scrollHeight;try{const res=await api('/api/agent/ask',{method:'POST',body:JSON.stringify({question:q})});$('typing').classList.remove('active');addMsg(res.answer||'Sin respuesta','ass');if(res.tables&&res.tables[0]&&res.tables[0].rows&&res.tables[0].rows.length){const t=res.tables[0];const c=document.createElement('div');c.className='msg ass';const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});let h='<div class="msg-meta">Asistente IA · '+now+'</div><div class="bubble-wrap"><div class="bub">Resultados<div class="twrap"><table><thead><tr>';t.columns.forEach(col=>{h+='<th>'+col+'</th>';});h+='</tr></thead><tbody>';t.rows.slice(0,25).forEach(r=>{h+='<tr>';t.columns.forEach(col=>{h+='<td>'+(r[col]==null?'-':r[col])+'</td>';});h+='</tr>';});h+='</tbody></table></div></div></div>';c.innerHTML=h;$('cb').appendChild(c);$('cb').scrollTop=$('cb').scrollHeight;}}catch(ex){$('typing').classList.remove('active');addMsg('Error al consultar los datos','ass');}};
+function addMsg(text,cls){const m=document.createElement('div');m.className='msg '+cls;const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});const safe=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');m.innerHTML='<div class="msg-meta">'+(cls==='user'?'Tú':'Asistente IA')+' · '+now+'</div><div class="bubble-wrap"><div class="bub">'+safe+'</div></div>';$('cb').appendChild(m);$('cb').scrollTop=$('cb').scrollHeight;}
+$('cf').onsubmit=async e=>{e.preventDefault();const q=$('ci').value.trim();if(!q)return;addMsg(q,'user');$('ci').value='';$('typing').classList.add('active');$('cb').scrollTop=$('cb').scrollHeight;try{const res=await api('/api/agent/ask',{method:'POST',body:JSON.stringify({question:q})});$('typing').classList.remove('active');const ans=res&&res.answer?res.answer:'Sin respuesta';addMsg(ans,'ass');if(res&&res.tables&&res.tables[0]&&Array.isArray(res.tables[0].rows)&&res.tables[0].rows.length){const t=res.tables[0];const c=document.createElement('div');c.className='msg ass';const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});let h='<div class="msg-meta">Asistente IA · '+now+'</div><div class="bubble-wrap"><div class="bub">Resultados<div class="twrap"><table><thead><tr>';(t.columns||[]).forEach(col=>{h+='<th>'+(col+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</th>';});h+='</tr></thead><tbody>';t.rows.slice(0,40).forEach(r=>{h+='<tr>';(t.columns||[]).forEach(col=>{const v=r[col];h+='<td>'+(v===null||v===undefined?'-':(v+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'))+'</td>';});h+='</tr>';});h+='</tbody></table></div></div></div>';c.innerHTML=h;$('cb').appendChild(c);$('cb').scrollTop=$('cb').scrollHeight;}}catch(ex){$('typing').classList.remove('active');addMsg('No se pudo generar la consulta. Intenta con otra pregunta.','ass');}};
 </script>
 </body>
 </html>
