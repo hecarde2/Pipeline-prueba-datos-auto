@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+pyjwt
+requests
+duckdb
+pandas
+pyarrow
+boto3
+sse-starlette

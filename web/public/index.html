@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SismoWatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f7f5f0;--panel:#ffffff;--border:#e6dfd3;--text:#1f1b16;--sub:#6b6255;--gold:#b59f5b;--gold2:#8c7a3d}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+body{background:var(--bg);color:var(--text)}
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-card{width:420px;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:40px;box-shadow:0 40px 80px -60px rgba(140,122,61,.4)}
+.login-card h1{text-align:center;margin-bottom:6px}
+.login-card p{text-align:center;color:var(--sub);margin-bottom:24px}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.input{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#faf7f2}
+.btn{width:100%;padding:12px;border-radius:999px;border:none;background:linear-gradient(90deg,#b59f5b,#8c7a3d);color:#fff;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.7}
+.err{color:#b91c1c;text-align:center;margin-top:10px;min-height:18px}
+#app{display:none}
+header{border-bottom:1px solid var(--border);background:rgba(247,245,240,.98);position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1600px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px}
+.dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#b59f5b,#8c7a3d)}
+.wrap{padding:24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 30px 60px -50px rgba(140,122,61,.4)}
+.kpi small{color:var(--sub)}
+.kpi h2{font-size:42px;margin-top:6px}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 40px 70px -60px rgba(140,122,61,.4)}
+.panel h3{padding:18px 22px 0}
+.panel p{padding:0 22px;color:var(--sub)}
+.panel-body{padding:16px 22px 22px}
+#map{height:460px;border-radius:14px}
+canvas{max-height:320px}
+.table{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:var(--sub);padding:10px;border-bottom:1px solid var(--border);font-weight:500}
+td{padding:12px 10px;border-bottom:1px solid var(--border)}
+.list{display:grid;gap:10px}
+.item{display:flex;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(90deg,rgba(181,159,91,.06),transparent)}
+#chatOverlay{display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(1200px 800px at 50% 0%,rgba(181,159,91,.18),transparent),rgba(20,16,10,.55);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:18px}
+.chat-modal{width:min(1160px,98vw);height:min(860px,94vh);background:linear-gradient(180deg,rgba(181,159,91,.16),transparent 45%),var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:0 120px 200px -140px rgba(140,122,61,.9);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+.chat-head{display:flex;align-items:center;justify-content:space-between;padding:18px 30px;border-bottom:1px solid var(--border)}
+.chat-head-title{display:flex;flex-direction:column}
+.chat-head-title small{color:var(--sub)}
+.chat-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(140,122,61,.6);color:var(--gold2);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.chat-body{padding:28px 32px;overflow:auto;display:grid;gap:16px;align-content:start}
+.chat-body::-webkit-scrollbar{width:8px}
+.chat-body::-webkit-scrollbar-thumb{background:rgba(140,122,61,.4);border-radius:10px}
+.msg{display:grid;gap:8px;max-width:74%}
+.msg.user{justify-self:end;text-align:right}
+.msg-meta{font-size:12px;color:var(--sub)}
+.bubble-wrap{display:flex;flex-direction:column;gap:10px}
+.bub{position:relative;padding:14px 20px;border-radius:22px;background:linear-gradient(135deg,#b59f5b,#8c7a3d);color:#fff;white-space:normal;word-break:break-word;box-shadow:0 40px 70px -60px rgba(140,122,61,.9)}
+.msg.ass .bub{background:linear-gradient(180deg,rgba(255,255,255,.98),#f9f6f1);color:var(--text);border:1px solid var(--border);box-shadow:none}
+.twrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:#fff}
+.twrap table{min-width:680px}
+.twrap th{background:linear-gradient(90deg,rgba(181,159,91,.12),transparent)}
+.chat-foot{display:flex;gap:12px;padding:18px 30px;border-top:1px solid var(--border);background:linear-gradient(180deg,transparent,rgba(181,159,91,.08))}
+.chat-input{flex:1;padding:14px 22px;border-radius:999px;border:1px solid var(--border);background:rgba(250,247,242,.98);font-size:15px}
+.chat-input:focus{outline:none;border-color:rgba(181,159,91,.9);box-shadow:0 0 0 4px rgba(181,159,91,.12)}
+.btn-sm{padding:12px 24px;border-radius:999px;border:none;background:linear-gradient(90deg,#b59f5b,#8c7a3d);color:#fff;font-weight:600;cursor:pointer}
+.ghost{padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:transparent;cursor:pointer}
+.typing{display:none;align-items:center;gap:8px;color:var(--sub)}
+.typing.active{display:flex}
+.dot-typing{width:6px;height:6px;border-radius:50%;background:var(--gold2);animation:pulse 1s infinite}
+.dot-typing:nth-child(2){animation-delay:.15s}
+.dot-typing:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}
+</style>
+</head>
+<body>
+<section id="login">
+  <div class="login-card">
+    <h1>SismoWatch</h1>
+    <p>Panel Analítico</p>
+    <form id="lf">
+      <div class="field"><span>Usuario</span><input class="input" id="u" required></div>
+      <div class="field"><span>Contraseña</span><input class="input" id="p" type="password" required></div>
+      <button class="btn" id="lb" type="submit"><span id="lbt">Iniciar sesión</span></button>
+      <div class="err" id="le"></div>
+    </form>
+  </div>
+</section>
+<div id="app">
+  <header>
+    <nav class="nav">
+      <div class="brand"><div class="dot"></div><div><strong>SismoWatch</strong><br><small style="color:var(--sub)">Monitoreo & Análisis Sísmico</small></div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn-sm" id="openChat">Chatbot IA</button>
+        <button class="ghost" id="ecsv" style="display:none">Descargar CSV</button>
+        <button class="ghost" id="epdf" style="display:none">Descargar PDF</button>
+        <span class="pill" id="who"></span>
+        <button class="ghost" id="out">Salir</button>
+      </div>
+    </nav>
+  </header>
+  <div class="wrap">
+    <section class="kpis">
+      <div class="kpi"><small>Eventos últimas 24h</small><h2 id="k1">-</h2></div>
+      <div class="kpi"><small>Magnitud máxima</small><h2 id="k2">-</h2></div>
+      <div class="kpi"><small>Magnitud promedio</small><h2 id="k3">-</h2></div>
+      <div class="kpi"><small>Calidad</small><h2 id="k4">-</h2></div>
+    </section>
+    <section class="grid">
+      <div class="panel">
+        <h3>Mapa sísmico</h3>
+        <p>Distribución geográfica en tiempo real</p>
+        <div class="panel-body"><div id="map"></div></div>
+      </div>
+      <div class="panel">
+        <h3>Top regiones</h3>
+        <p>Mayor actividad sísmica</p>
+        <div class="panel-body"><div class="list" id="rl"></div></div>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel">
+        <h3>Distribución por magnitud</h3>
+        <p>Frecuencia por rango</p>
+        <div class="panel-body"><canvas id="mc"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Actividad por hora</h3>
+        <p>Últimas 48 horas</p>
+        <div class="panel-body"><canvas id="hc"></canvas></div>
+      </div>
+    </section>
+    <div class="panel">
+      <h3>Registro de eventos</h3>
+      <p>Datos desde gold.events</p>
+      <div class="panel-body">
+        <div style="display:flex;gap:10px;margin-bottom:14px"><input id="fm" placeholder="Mag mínima" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:#faf7f2"><button class="btn-sm" id="af">Aplicar filtro</button></div>
+        <div class="table"><table><thead><tr><th>Fecha / Hora</th><th>Magnitud</th><th>Tipo</th><th>Ubicación</th><th>Región</th><th>Profundidad</th><th>Latitud</th><th>Longitud</th></tr></thead><tbody id="eb"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="chatOverlay">
+  <div class="chat-modal">
+    <div class="chat-head">
+      <div class="chat-head-title">
+        <div style="display:flex;align-items:center;gap:12px"><strong>Asistente IA</strong><span class="chat-badge">Gold Analytics</span></div>
+        <small>Consultas en lenguaje natural sobre datos sísmicos</small>
+      </div>
+      <button class="ghost" id="cc">Cerrar</button>
+    </div>
+    <div class="chat-body" id="cb"></div>
+    <div class="typing" id="typing"><div class="dot-typing"></div><div class="dot-typing"></div><div class="dot-typing"></div><span>Pensando...</span></div>
+    <form class="chat-foot" id="cf">
+      <input class="chat-input" id="ci" placeholder="Pregunta sobre eventos, regiones, magnitudes..." autocomplete="off">
+      <button class="btn-sm" type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function gt(){return sessionStorage.getItem('t')||sessionStorage.getItem('sw_t');}
+function gr(){return sessionStorage.getItem('r')||sessionStorage.getItem('sw_r');}
+function gu(){return sessionStorage.getItem('u2')||sessionStorage.getItem('sw_u');}
+let tk=gt(),rl=gr(),un=gu();
+if(tk&&rl&&un)go();else sl();
+function sl(){$('login').style.display='flex';$('app').style.display='none';sessionStorage.clear();}
+function go(){$('login').style.display='none';$('app').style.display='block';$('who').textContent=un+' · '+rl;if(rl==='admin'){$('ecsv').style.display='inline';$('epdf').style.display='inline';}im();ld();}
+$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const b=$('lb'),t=$('lbt');b.disabled=true;t.textContent='Entrando...';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,password:$('p').value})});if(!r.ok){const er=await r.json().catch(()=>({}));throw new Error(er.detail||'Error');}const d=await r.json();tk=d.access_token;rl=d.role;un=$('u').value;sessionStorage.setItem('t',tk);sessionStorage.setItem('r',rl);sessionStorage.setItem('u2',un);sessionStorage.setItem('sw_t',tk);sessionStorage.setItem('sw_r',rl);sessionStorage.setItem('sw_u',un);setTimeout(go,200);}catch(ex){$('le').textContent=ex.message;}finally{b.disabled=false;t.textContent='Iniciar sesión';}};
+$('out').onclick=sl;
+$('openChat').onclick=()=>{$('chatOverlay').style.display='flex';setTimeout(()=>$('ci').focus(),150);};
+$('cc').onclick=()=>{$('chatOverlay').style.display='none';};
+$('chatOverlay').onclick=e=>{if(e.target.id==='chatOverlay')$('chatOverlay').style.display='none';};
+$('ecsv').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.csv';a.click();};
+$('epdf').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export/pdf',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.html';a.click();};
+async function api(p,o={}){const t=gt()||tk;if(!t){sl();throw new Error('x');}const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,...(o.headers||{})}});if(r.status===401){sl();throw new Error('x');}return r.json();}
+let map,mk=[],mc,hc;
+function im(){if(map)return;map=L.map('map',{zoomControl:true}).setView([20,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:''}).addTo(map);}
+async function ld(){const mg=$('fm').value?('&min_mag='+$('fm').value):'';const [k,ev,s,ts]=await Promise.all([api('/api/kpis'),api('/api/events?limit=160'+mg),api('/api/stats/summary'),api('/api/stats/timeseries?hours=48')]);$('k1').textContent=k.events_24h??0;$('k2').textContent=k.max_magnitude!=null?Number(k.max_magnitude).toFixed(2):'-';$('k3').textContent=k.avg_magnitude!=null?Number(k.avg_magnitude).toFixed(2):'-';$('k4').textContent=k.quality_score!=null?k.quality_score+'%':'-';
+$('eb').innerHTML='';mk.forEach(m=>map.removeLayer(m));mk=[];(ev.items||[]).forEach(it=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+(it.event_time?new Date(it.event_time).toLocaleString('es-ES'):'-')+'</td><td>'+(it.magnitude!=null?Number(it.magnitude).toFixed(2):'-')+'</td><td>'+(it.mag_type||'-')+'</td><td>'+(it.place||'-')+'</td><td>'+(it.region||'-')+'</td><td>'+(it.depth_km!=null?Number(it.depth_km).toFixed(1):'-')+'</td><td>'+(it.latitude!=null?Number(it.latitude).toFixed(3):'-')+'</td><td>'+(it.longitude!=null?Number(it.longitude).toFixed(3):'-')+'</td>';$('eb').appendChild(tr);if(it.latitude&&it.longitude){const m=L.circleMarker([Number(it.latitude),Number(it.longitude)],{radius:Math.max(4,(Number(it.magnitude)||2)*2.1),color:'#8c7a3d',fillColor:'#b59f5b',fillOpacity:.78}).addTo(map);mk.push(m);}});
+if(mk.length)map.fitBounds(L.featureGroup(mk).getBounds().pad(.24));
+$('rl').innerHTML='';(s.top_regions||[]).forEach((r,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML='<div><strong>'+(i+1)+'.</strong> '+r.region+'</div><span>'+r.events+'</span>';$('rl').appendChild(d);});
+if(mc)mc.destroy();mc=new Chart($('mc'),{type:'bar',data:{labels:(s.by_magnitude||[]).map(x=>x.mag_bucket),datasets:[{data:(s.by_magnitude||[]).map(x=>x.events),backgroundColor:'rgba(181,159,91,.88)',borderRadius:10,maxBarThickness:38}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});
+if(hc)hc.destroy();hc=new Chart($('hc'),{type:'line',data:{labels:(ts||[]).map(x=>(x.hour||'').slice(11,16)),datasets:[{label:'Eventos',data:(ts||[]).map(x=>x.events),borderColor:'#b59f5b',backgroundColor:'rgba(181,159,91,.16)',fill:true,tension:.36,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});
+}
+$('af').onclick=ld;
+function addMsg(text,cls){const m=document.createElement('div');m.className='msg '+cls;const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});m.innerHTML='<div class="msg-meta">'+(cls==='user'?'Tú':'Asistente IA')+' · '+now+'</div><div class="bubble-wrap"><div class="bub">'+text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div></div>';$('cb').appendChild(m);$('cb').scrollTop=$('cb').scrollHeight;}
+$('cf').onsubmit=async e=>{e.preventDefault();const q=$('ci').value.trim();if(!q)return;addMsg(q,'user');$('ci').value='';$('typing').classList.add('active');$('cb').scrollTop=$('cb').scrollHeight;try{const res=await api('/api/agent/ask',{method:'POST',body:JSON.stringify({question:q})});$('typing').classList.remove('active');addMsg(res.answer||'Sin respuesta','ass');if(res.tables&&res.tables[0]&&res.tables[0].rows&&res.tables[0].rows.length){const t=res.tables[0];const c=document.createElement('div');c.className='msg ass';const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});let h='<div class="msg-meta">Asistente IA · '+now+'</div><div class="bubble-wrap"><div class="bub">Resultados<div class="twrap"><table><thead><tr>';t.columns.forEach(col=>{h+='<th>'+col+'</th>';});h+='</tr></thead><tbody>';t.rows.slice(0,25).forEach(r=>{h+='<tr>';t.columns.forEach(col=>{h+='<td>'+(r[col]==null?'-':r[col])+'</td>';});h+='</tr>';});h+='</tbody></table></div></div></div>';c.innerHTML=h;$('cb').appendChild(c);$('cb').scrollTop=$('cb').scrollHeight;}}catch(ex){$('typing').classList.remove('active');addMsg('Error al consultar los datos','ass');}};
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+pytest
+httpx
+fastapi
+pyjwt
+psycopg2-binary
+requests
+pydantic

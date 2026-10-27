@@ -1,0 +1,10 @@
+apache-airflow-providers-postgres
+psycopg2-binary
+pandas
+pyarrow
+fastparquet
+duckdb
+boto3
+requests
+urllib3
+pyjwt

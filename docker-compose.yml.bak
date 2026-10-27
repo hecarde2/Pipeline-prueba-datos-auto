@@ -1,0 +1,115 @@
+x-airflow: &airflow
+  build: ./airflow
+  env_file: .env
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_meta:${AIRFLOW_META_PASSWORD}@postgres:5432/airflow
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+    AIRFLOW_CONN_PG_INGEST: postgresql://ingest_user:${INGEST_PASSWORD}@postgres:5432/${DB_NAME}
+    AIRFLOW_CONN_PG_TRANSFORM: postgresql://transform_user:${TRANSFORM_PASSWORD}@postgres:5432/${DB_NAME}
+    PYTHONPATH: /opt/airflow:/opt/shared
+    OLLAMA_URL: http://ollama:11434
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/include:/opt/airflow/include
+    - ./airflow/tests:/opt/airflow/tests
+    - ./shared:/opt/shared:ro
+    - airflow_logs:/opt/airflow/logs
+  depends_on:
+    postgres: { condition: service_healthy }
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      AIRFLOW_META_PASSWORD: ${AIRFLOW_META_PASSWORD}
+      INGEST_PASSWORD: ${INGEST_PASSWORD}
+      TRANSFORM_PASSWORD: ${TRANSFORM_PASSWORD}
+      READER_PASSWORD: ${READER_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow
+    command: >
+      bash -c "airflow db migrate &&
+      (airflow users create --username $${AIRFLOW_ADMIN_USER} --password $${AIRFLOW_ADMIN_PASSWORD}
+       --firstname Admin --lastname User --role Admin --email admin@example.com || true)"
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow
+    command: webserver
+    ports: ["8080:8080"]
+    depends_on:
+      airflow-init: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow
+    command: scheduler
+    depends_on:
+      airflow-init: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes: [ "ollama:/root/.ollama" ]
+    # GPU NVIDIA (opcional): descomenta
+    # deploy: { resources: { reservations: { devices: [ { driver: nvidia, count: all, capabilities: [gpu] } ] } } }
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    environment: { OLLAMA_HOST: "http://ollama:11434" }
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${OLLAMA_MODEL}"]
+    depends_on:
+      ollama: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    build: ./api
+    env_file: .env
+    environment:
+      DB_DSN: postgresql://reader_user:${READER_PASSWORD}@postgres:5432/${DB_NAME}
+      AIRFLOW_URL: http://airflow-webserver:8080
+      OLLAMA_URL: http://ollama:11434
+      PYTHONPATH: /app:/opt/shared
+    volumes:
+      - ./shared:/opt/shared:ro
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: unless-stopped
+
+  web:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./web/public:/usr/share/nginx/html:ro
+      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports: ["3000:80"]
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  ollama:
+  airflow_logs:
