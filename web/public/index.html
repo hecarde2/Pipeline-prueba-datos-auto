@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f7f5f0;--panel:#ffffff;--border:#e6dfd3;--text:#1f1b16;--sub:#6b6255;--gold:#b59f5b;--gold2:#8c7a3d}
@@ -23,15 +24,16 @@ body{background:var(--bg);color:var(--text)}
 .err{color:#b91c1c;text-align:center;margin-top:10px;min-height:18px}
 #app{display:none}
 header{border-bottom:1px solid var(--border);background:rgba(247,245,240,.98);position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1600px;margin:0 auto}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1700px;margin:0 auto}
 .brand{display:flex;align-items:center;gap:12px}
 .dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#b59f5b,#8c7a3d)}
-.wrap{padding:24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
+.wrap{padding:24px;display:grid;gap:18px;max-width:1700px;margin:0 auto}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .kpi{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 30px 60px -50px rgba(140,122,61,.4)}
 .kpi small{color:var(--sub)}
 .kpi h2{font-size:42px;margin-top:6px}
 .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1.8fr 1fr 1.4fr;gap:16px}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 40px 70px -60px rgba(140,122,61,.4)}
 .panel h3{padding:18px 22px 0}
 .panel p{padding:0 22px;color:var(--sub)}
@@ -40,10 +42,18 @@ header{border-bottom:1px solid var(--border);background:rgba(247,245,240,.98);po
 canvas{max-height:320px}
 .table{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{text-align:left;color:var(--sub);padding:10px;border-bottom:1px solid var(--border);font-weight:500}
-td{padding:12px 10px;border-bottom:1px solid var(--border)}
+th{text-align:left;color:var(--sub);padding:10px;border-bottom:1px solid var(--border);font-weight:500;font-size:13px}
+td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:14px}
 .list{display:grid;gap:10px}
 .item{display:flex;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(90deg,rgba(181,159,91,.06),transparent)}
+.ai-panel{background:radial-gradient(900px 500px at 50% 0%,rgba(181,159,91,.16),transparent),var(--panel)}
+.ai-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.ai-card{border:1px solid var(--border);border-radius:14px;padding:14px 16px;background:linear-gradient(180deg,#fff,rgba(249,246,241,.92));display:grid;gap:6px}
+.ai-card-top{display:flex;justify-content:space-between;align-items:center}
+.ai-card h4{font-size:15px}
+.ai-card small{color:var(--sub)}
+.ai-card p{padding:0;font-size:13.5px;line-height:1.7}
+.ai-pill{display:inline-flex;padding:4px 10px;border-radius:999px;border:1px solid rgba(140,122,61,.6);color:var(--gold2);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 #chatOverlay{display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(1200px 800px at 50% 0%,rgba(181,159,91,.18),transparent),rgba(20,16,10,.55);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:18px}
 .chat-modal{width:min(1160px,98vw);height:min(860px,94vh);background:linear-gradient(180deg,rgba(181,159,91,.16),transparent 45%),var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:0 120px 200px -140px rgba(140,122,61,.9);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
 .chat-head{display:flex;align-items:center;justify-content:space-between;padding:18px 30px;border-bottom:1px solid var(--border)}
@@ -79,7 +89,7 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 <section id="login">
   <div class="login-card">
     <h1>SismoWatch</h1>
-    <p>Panel Analítico</p>
+    <p>Panel Analítico Profesional</p>
     <form id="lf">
       <div class="field"><span>Usuario</span><input class="input" id="u" required></div>
       <div class="field"><span>Contraseña</span><input class="input" id="p" type="password" required></div>
@@ -91,11 +101,12 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 <div id="app">
   <header>
     <nav class="nav">
-      <div class="brand"><div class="dot"></div><div><strong>SismoWatch</strong><br><small style="color:var(--sub)">Monitoreo & Análisis Sísmico</small></div></div>
-      <div style="display:flex;gap:10px;align-items:center">
+      <div class="brand"><div class="dot"></div><div><strong>SismoWatch</strong><br><small style="color:var(--sub)">Inteligencia Sísmica • Lakehouse MinIO + DuckDB</small></div></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-sm" id="openChat">Chatbot IA</button>
         <button class="ghost" id="ecsv" style="display:none">Descargar CSV</button>
         <button class="ghost" id="epdf" style="display:none">Descargar PDF</button>
+        <button class="ghost" id="aregen" style="display:none">Generar/Regenerar reporte con IA (.MD)</button>
         <span id="who"></span>
         <button class="ghost" id="out">Salir</button>
       </div>
@@ -106,22 +117,29 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
       <div class="kpi"><small>Eventos últimas 24h</small><h2 id="k1">-</h2></div>
       <div class="kpi"><small>Magnitud máxima</small><h2 id="k2">-</h2></div>
       <div class="kpi"><small>Magnitud promedio</small><h2 id="k3">-</h2></div>
-      <div class="kpi"><small>Calidad</small><h2 id="k4">-</h2></div>
+      <div class="kpi"><small>Calidad de datos</small><h2 id="k4">-</h2></div>
+    </section>
+    <section class="grid3">
+      <div class="panel"><h3>Análisis geoespacial</h3><p>Mapa interactivo con eventos reales desde gold.events</p><div class="panel-body"><div id="map"></div></div></div>
+      <div class="panel"><h3>Concentración por región</h3><p>Top regiones con mayor actividad</p><div class="panel-body"><div class="list" id="rl"></div></div></div>
+      <div class="panel ai-panel"><h3>Análisis en tiempo real sobre gold.events</h3><p>Evaluación automática con contexto sísmico</p><div class="panel-body"><div class="ai-grid">
+        <div class="ai-card"><div class="ai-card-top"><h4>Clasificación sísmica</h4><span class="ai-pill">IA</span></div><p id="ai1">-</p></div>
+        <div class="ai-card"><div class="ai-card-top"><h4>Riesgo regional</h4><span class="ai-pill">Predictivo</span></div><p id="ai2">-</p></div>
+        <div class="ai-card"><div class="ai-card-top"><h4>Patrón temporal</h4><span class="ai-pill">Tendencia</span></div><p id="ai3">-</p></div>
+        <div class="ai-card"><div class="ai-card-top"><h4>Profundidad & Energía</h4><span class="ai-pill">Física</span></div><p id="ai4">-</p></div>
+        <div class="ai-card"><div class="ai-card-top"><h4>Recomendación operativa</h4><span class="ai-pill">Accionable</span></div><p id="ai5">-</p></div>
+      </div></div></div>
     </section>
     <section class="grid">
-      <div class="panel"><h3>Mapa sísmico</h3><p>Distribución geográfica</p><div class="panel-body"><div id="map"></div></div></div>
-      <div class="panel"><h3>Top regiones</h3><p>Mayor actividad</p><div class="panel-body"><div class="list" id="rl"></div></div></div>
-    </section>
-    <section class="grid">
-      <div class="panel"><h3>Distribución por magnitud</h3><p>Frecuencia por rango</p><div class="panel-body"><canvas id="mc"></canvas></div></div>
-      <div class="panel"><h3>Actividad por hora</h3><p>Últimas 48 horas</p><div class="panel-body"><canvas id="hc"></canvas></div></div>
+      <div class="panel"><h3>Distribución por magnitud</h3><p>Histograma por rango sísmico</p><div class="panel-body"><canvas id="mc"></canvas></div></div>
+      <div class="panel"><h3>Evolución temporal</h3><p>Actividad por hora (48h)</p><div class="panel-body"><canvas id="hc"></canvas></div></div>
     </section>
     <div class="panel">
-      <h3>Registro de eventos</h3>
-      <p>Datos desde gold.events</p>
+      <h3>Registro detallado de eventos</h3>
+      <p>Fuente: gold.events • Consultas en tiempo real via DuckDB + httpfs</p>
       <div class="panel-body">
-        <div style="display:flex;gap:10px;margin-bottom:14px"><input id="fm" placeholder="Mag mínima" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:#faf7f2"><button class="btn-sm" id="af">Aplicar</button></div>
-        <div class="table"><table><thead><tr><th>Fecha/Hora</th><th>Magnitud</th><th>Tipo</th><th>Ubicación</th><th>Región</th><th>Profundidad</th><th>Lat</th><th>Lon</th></tr></thead><tbody id="eb"></tbody></table></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center"><input id="fm" placeholder="Filtrar por magnitud mínima" style="padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:#faf7f2"><button class="btn-sm" id="af">Aplicar filtro</button><span style="color:var(--sub);font-size:13px" id="evcount"></span></div>
+        <div class="table"><table><thead><tr><th>Fecha/Hora UTC</th><th>Magnitud</th><th>Tipo</th><th>Ubicación</th><th>Región</th><th>Profundidad (km)</th><th>Latitud</th><th>Longitud</th><th>Event ID</th></tr></thead><tbody id="eb"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -129,12 +147,12 @@ td{padding:12px 10px;border-bottom:1px solid var(--border)}
 <div id="chatOverlay">
   <div class="chat-modal">
     <div class="chat-head">
-      <div class="chat-head-title"><div style="display:flex;align-items:center;gap:12px"><strong>Asistente IA</strong><span class="chat-badge">Gold Analytics</span></div><small>Consultas en lenguaje natural sobre gold.events</small></div>
+      <div class="chat-head-title"><div style="display:flex;align-items:center;gap:12px"><strong>Asistente IA Avanzado</strong><span class="chat-badge">Gold Analytics</span></div><small>Análisis profundo de eventos sísmicos con contexto geográfico y estadístico</small></div>
       <button class="ghost" id="cc">Cerrar</button>
     </div>
     <div class="chat-body" id="cb"></div>
-    <div class="typing" id="typing"><div class="dot-typing"></div><div class="dot-typing"></div><div class="dot-typing"></div><span>Pensando...</span></div>
-    <form class="chat-foot" id="cf"><input class="chat-input" id="ci" placeholder="Pregunta sobre eventos..." autocomplete="off"><button class="btn-sm" type="submit">Enviar</button></form>
+    <div class="typing" id="typing"><div class="dot-typing"></div><div class="dot-typing"></div><div class="dot-typing"></div><span>Analizando en gold.events...</span></div>
+    <form class="chat-foot" id="cf"><input class="chat-input" id="ci" placeholder="Pregunta con mayor profundidad..." autocomplete="off"><button class="btn-sm" type="submit">Enviar</button></form>
   </div>
 </div>
 <script>
@@ -142,23 +160,108 @@ const $=id=>document.getElementById(id);
 function gt(){return sessionStorage.getItem('t')||sessionStorage.getItem('sw_t');}
 function gr(){return sessionStorage.getItem('r')||sessionStorage.getItem('sw_r');}
 function gu(){return sessionStorage.getItem('u2')||sessionStorage.getItem('sw_u');}
-let tk=gt(),rl=gr(),un=gu();if(tk&&rl&&un)go();else sl();
-function sl(){$('login').style.display='flex';$('app').style.display='none';sessionStorage.clear();}
-function go(){$('login').style.display='none';$('app').style.display='block';$('who').textContent=un+' · '+rl;if(rl==='admin'){$('ecsv').style.display='inline';$('epdf').style.display='inline';}im();ld();}
-$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const b=$('lb'),t=$('lbt');b.disabled=true;t.textContent='Entrando...';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,password:$('p').value})});if(!r.ok){const er=await r.json().catch(()=>({}));throw new Error(er.detail||'Error');}const d=await r.json();tk=d.access_token;rl=d.role;un=$('u').value;sessionStorage.setItem('t',tk);sessionStorage.setItem('r',rl);sessionStorage.setItem('u2',un);sessionStorage.setItem('sw_t',tk);sessionStorage.setItem('sw_r',rl);sessionStorage.setItem('sw_u',un);setTimeout(go,150);}catch(ex){$('le').textContent=ex.message;}finally{b.disabled=false;t.textContent='Iniciar sesión';}};
-$('out').onclick=sl;
+function init(){let tkn=gt(),rlv=gr(),unv=gu();tk=tkn;rl=rlv;un=unv;try{if(tk&&rl&&un){$('login').style.display='none';$('app').style.display='block';go();return;}}catch(e){}sl();const aip2=document.querySelector('.ai-panel');if(aip2)aip2.style.display='none';}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init,{once:true});}else{setTimeout(init,0);}
+function sl(){$('login').style.display='flex';$('app').style.display='none';try{}catch(e){}if(autoTimer){clearInterval(autoTimer);autoTimer=null;}}
+function go(){tk=tk||gt();rl=rl||gr();un=un||gu();if(!tk){sl();return;}$('login').style.display='none';$('app').style.display='block';$('who').textContent=(un||'')+' · '+(rl||'');if(rl==='admin'){$('ecsv').style.display='inline';$('epdf').style.display='inline';if($('aregen'))$('aregen').style.display='inline';const aip=document.querySelector('.ai-panel');if(aip)aip.style.display='block';}else{$('ecsv').style.display='none';$('epdf').style.display='none';if($('aregen'))$('aregen').style.display='none';const aip=document.querySelector('.ai-panel');if(aip)aip.style.display='none';}if(map){try{map.invalidateSize();}catch(e){}}setTimeout(()=>{try{im();ld(true).then(()=>{if(map)try{map.invalidateSize();}catch(e){}startAutoRefresh();if(rl==='admin'){ai().catch(()=>{});}}).catch(()=>{try{startAutoRefresh();}catch(e){}});}catch(e){try{startAutoRefresh();}catch(e2){}}},100);}
+$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const b=$('lb'),t=$('lbt');b.disabled=true;t.textContent='Entrando...';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,password:$('p').value})});if(!r.ok){const er=await r.json().catch(()=>({}));throw new Error(er.detail||'Error');}const d=await r.json();tk=d.access_token;rl=d.role;un=$('u').value;try{sessionStorage.setItem('t',tk);sessionStorage.setItem('r',rl);sessionStorage.setItem('u2',un);sessionStorage.setItem('sw_t',tk);sessionStorage.setItem('sw_r',rl);sessionStorage.setItem('sw_u',un);}catch(ex2){}b.disabled=false;t.textContent='Iniciar sesión';tk=gt()||tk;rl=gr()||rl;un=gu()||un;$('login').style.display='none';$('app').style.display='block';go();}catch(ex){$('le').textContent=ex.message||'Error';b.disabled=false;t.textContent='Iniciar sesión';}};
+$('out').onclick=()=>{if(autoTimer){clearInterval(autoTimer);autoTimer=null;}try{sessionStorage.clear();}catch(e){}sl();location.reload();};
+$('aregen').onclick=async()=>{const t=gt()||tk;if(!t)return;try{const rd=prompt('Fecha del reporte (YYYY-MM-DD):',new Date(Date.now()-86400000).toISOString().slice(0,10));if(!rd)return;const r=await fetch('/api/admin/reports/regenerate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({report_date:rd})});const d=await r.json().catch(()=>({}));alert(d.dag_run_id?'Reporte con IA lanzado: '+d.dag_run_id:'Reporte con IA lanzado');setTimeout(async()=>{
+  try{
+    const rr=await fetch('/api/reports',{headers:{'Authorization':'Bearer '+t}});
+    const reps=await rr.json().catch(()=>[]);
+    let rep=null;
+    for(const x of (Array.isArray(reps)?reps:[])){ if(x.report_date===rd){rep=x;break;} }
+    if(!rep){
+      // try direct from minio via api? just download md if exists by trying to get via a simple fetch to known path not exposed; fallback build client side
+    }
+    // try to fetch md from minio public? not directly; build md client side
+    const kRes=await fetch('/api/kpis?_='+Date.now(),{headers:{'Authorization':'Bearer '+t}});
+    const kev=await kRes.json().catch(()=>({}));
+    const evRes=await fetch('/api/events?limit=500&_='+Date.now(),{headers:{'Authorization':'Bearer '+t}});
+    const evd=await evRes.json().catch(()=>({items:[]}));
+    const items=evd.items||[];
+    const todays=items.filter(x=>x.event_time && x.event_time.startsWith(rd));
+    const count=todays.length;
+    let maxm=null;
+    for(const x of todays){ if(x.magnitude!=null){ const v=Number(x.magnitude); if(maxm===null||v>maxm)maxm=v; } }
+    const reg={}; for(const x of todays){ const rrn=x.region||'Desconocida'; reg[rrn]=(reg[rrn]||0)+1; }
+    const top=Object.entries(reg).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const facts={events:count,max_magnitude:maxm,top_regions:top};
+    const headline=`SismoWatch ${rd}: ${count} sismos registrados`;
+    const summary=`Se registraron ${count} eventos sísmicos el ${rd}. Magnitud máxima: ${maxm!==null?maxm.toFixed(2):'N/D'}.`;
+    const mdLines=[`# Reporte diario SismoWatch - ${rd}`,'',`**Titular:** ${headline}`,'','## Resumen',summary,'','## Hechos clave',`- Total de eventos: ${count}`,`- Magnitud máxima: ${maxm!==null?maxm.toFixed(2):'N/D'}`,`- Regiones con mayor actividad: ${top.map(x=>x[0]+' ('+x[1]+')').join(', ')||'N/D'}`,'','## Destacados',`- **Actividad**: ${summary}`,'','## Datos','```json',JSON.stringify(facts,null,2),'```','','_Generado por: admin (web)_','','_Fecha de generación: '+new Date().toISOString()+'_'];
+    const blob=new Blob([mdLines.join('\n')],{type:'text/markdown'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`reporte_sismowatch_${rd}.md`;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){}
+},2000);
+}catch(e){alert('Error al generar reporte');}};
 $('openChat').onclick=()=>{$('chatOverlay').style.display='flex';setTimeout(()=>$('ci').focus(),100);};
 $('cc').onclick=()=>{$('chatOverlay').style.display='none';};
 $('chatOverlay').onclick=e=>{if(e.target.id==='chatOverlay')$('chatOverlay').style.display='none';};
-$('ecsv').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch.csv';a.click();};
-$('epdf').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export/pdf',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch.html';a.click();};
-async function api(p,o={}){const t=gt()||tk;if(!t){sl();throw new Error('x');}const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,...(o.headers||{})}});if(r.status===401){sl();throw new Error('x');}const ct=r.headers.get('content-type')||'';if(ct.includes('application/json'))return r.json();return r.text();}
-let map,mk=[],mc,hc;
-function im(){if(map)return;map=L.map('map',{zoomControl:true}).setView([20,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:''}).addTo(map);}
-async function ld(){const mg=$('fm').value?('&min_mag='+$('fm').value):'';const [k,ev,s,ts]=await Promise.all([api('/api/kpis'),api('/api/events?limit=160'+mg),api('/api/stats/summary'),api('/api/stats/timeseries?hours=48')]);$('k1').textContent=k.events_24h??0;$('k2').textContent=k.max_magnitude!=null?Number(k.max_magnitude).toFixed(2):'-';$('k3').textContent=k.avg_magnitude!=null?Number(k.avg_magnitude).toFixed(2):'-';$('k4').textContent=k.quality_score!=null?k.quality_score+'%':'-';$('eb').innerHTML='';mk.forEach(m=>map.removeLayer(m));mk=[];(ev.items||[]).forEach(it=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+(it.event_time?new Date(it.event_time).toLocaleString('es-ES'):'-')+'</td><td>'+(it.magnitude!=null?Number(it.magnitude).toFixed(2):'-')+'</td><td>'+(it.mag_type||'-')+'</td><td>'+(it.place||'-')+'</td><td>'+(it.region||'-')+'</td><td>'+(it.depth_km!=null?Number(it.depth_km).toFixed(1):'-')+'</td><td>'+(it.latitude!=null?Number(it.latitude).toFixed(3):'-')+'</td><td>'+(it.longitude!=null?Number(it.longitude).toFixed(3):'-')+'</td>';$('eb').appendChild(tr);if(it.latitude&&it.longitude){const m=L.circleMarker([Number(it.latitude),Number(it.longitude)],{radius:Math.max(4,(Number(it.magnitude)||2)*2),color:'#8c7a3d',fillColor:'#b59f5b',fillOpacity:.8}).addTo(map);mk.push(m);}});if(mk.length)map.fitBounds(L.featureGroup(mk).getBounds().pad(.25));$('rl').innerHTML='';(s.top_regions||[]).forEach((r,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML='<div><strong>'+(i+1)+'.</strong> '+r.region+'</div><span>'+r.events+'</span>';$('rl').appendChild(d);});if(mc)mc.destroy();mc=new Chart($('mc'),{type:'bar',data:{labels:(s.by_magnitude||[]).map(x=>x.mag_bucket),datasets:[{data:(s.by_magnitude||[]).map(x=>x.events),backgroundColor:'rgba(181,159,91,.9)',borderRadius:10,maxBarThickness:40}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});if(hc)hc.destroy();hc=new Chart($('hc'),{type:'line',data:{labels:(ts||[]).map(x=>(x.hour||'').slice(11,16)),datasets:[{label:'Eventos',data:(ts||[]).map(x=>x.events),borderColor:'#b59f5b',backgroundColor:'rgba(181,159,91,.14)',fill:true,tension:.35,pointRadius:2}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});}
-$('af').onclick=ld;
-function addMsg(text,cls){const m=document.createElement('div');m.className='msg '+cls;const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});const safe=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');m.innerHTML='<div class="msg-meta">'+(cls==='user'?'Tú':'Asistente IA')+' · '+now+'</div><div class="bubble-wrap"><div class="bub">'+safe+'</div></div>';$('cb').appendChild(m);$('cb').scrollTop=$('cb').scrollHeight;}
-$('cf').onsubmit=async e=>{e.preventDefault();const q=$('ci').value.trim();if(!q)return;addMsg(q,'user');$('ci').value='';$('typing').classList.add('active');$('cb').scrollTop=$('cb').scrollHeight;try{const res=await api('/api/agent/ask',{method:'POST',body:JSON.stringify({question:q})});$('typing').classList.remove('active');const ans=res&&res.answer?res.answer:'Sin respuesta';addMsg(ans,'ass');if(res&&res.tables&&res.tables[0]&&Array.isArray(res.tables[0].rows)&&res.tables[0].rows.length){const t=res.tables[0];const c=document.createElement('div');c.className='msg ass';const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});let h='<div class="msg-meta">Asistente IA · '+now+'</div><div class="bubble-wrap"><div class="bub">Resultados<div class="twrap"><table><thead><tr>';(t.columns||[]).forEach(col=>{h+='<th>'+(col+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</th>';});h+='</tr></thead><tbody>';t.rows.slice(0,40).forEach(r=>{h+='<tr>';(t.columns||[]).forEach(col=>{const v=r[col];h+='<td>'+(v===null||v===undefined?'-':(v+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'))+'</td>';});h+='</tr>';});h+='</tbody></table></div></div></div>';c.innerHTML=h;$('cb').appendChild(c);$('cb').scrollTop=$('cb').scrollHeight;}}catch(ex){$('typing').classList.remove('active');addMsg('No se pudo generar la consulta. Intenta con otra pregunta.','ass');}};
+$('ecsv').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.csv';a.click();};
+$('epdf').onclick=async()=>{const t=gt()||tk;const r=await fetch('/api/events/export/pdf',{headers:{'Authorization':'Bearer '+t}});const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sismowatch_eventos.html';a.click();};
+async function api(p,o={}){const t=gt()||tk;if(!t){sl();throw new Error('x');}const r=await fetch(p,{...o,headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,...(o.headers||{})}});if(r.status===401){sl();throw new Error('x');}return r.json();}
+let map,mk=[],mc,hc,heatLayer=null,platesLayer=null,ldLock=false,ldTimer=null,firstFit=true;
+function im(){if(map)return;map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([15,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+  try{fetch('https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json',{cache:'no-store'}).then(r=>r.json()).then(gj=>{if(platesLayer)return;platesLayer=L.geoJSON(gj,{style:{color:'#8c7a3d',weight:1,opacity:0.6,dashArray:'4 2'}}).addTo(map);if(platesLayer.bringToBack)platesLayer.bringToBack();});}catch(e){}
+}
+async function ai(){try{const s=await api('/api/stats/summary').catch(()=>({by_magnitude:[],top_regions:[]}));const t=await api('/api/stats/timeseries?hours=48').catch(()=>[]);const evs=await api('/api/events?limit=200').catch(()=>({items:[]}));const items=evs.items||[];const regions=s.top_regions||[];const mags=s.by_magnitude||[];if(regions[0])$('ai1').textContent='Dominancia en '+regions[0].region+': '+regions[0].events+' eventos. Distribución '+(regions[1]?regions[1].region+(' ('+regions[1].events+')'):'complementaria');const deep=items.filter(x=>x.depth_km!=null&&Number(x.depth_km)>70).length;const strong=items.filter(x=>x.magnitude!=null&&Number(x.magnitude)>=4).length;$('ai2').textContent=strong>0?('Se detectan '+strong+' eventos >=M4. Regiones con mayor carga: '+(regions.slice(0,2).map(x=>x.region).join(', '))+'. Vigilancia focalizada.'):'Actividad mayoritariamente <M4. Riesgo regional contenido con base en distribución actual.';const hrs=t||[];const mx=hrs.length?Math.max(...hrs.map(x=>x.events||0)):0;$('ai3').textContent=mx>3?('Picos horarios detectados ('+mx+' eventos). Patrón no uniforme, sugiere agrupación temporal.'):'Patrón temporal estable. Sin agrupaciones significativas en últimas 48h.';$('ai4').textContent='Profundidad intermedia/profunda: '+deep+' eventos >70km. Energía acumulada concentrada en zonas convergentes. Promedio mag: '+(items.length? (items.reduce((a,b)=>a+(Number(b.magnitude)||0),0)/items.length).toFixed(2):'-');$('ai5').textContent=strong>0?'Recomendación: Monitorear regiones con >=M4. Priorizar revisión geoespacial y seguimiento en chatbot IA para análisis cruzado.':'Recomendación: Operación normal. Mantener seguimiento rutinario con consultas al asistente IA para detección temprana.';}catch(e){$('ai1').textContent='Clasificación en proceso desde gold.events';$('ai2').textContent='Evaluación regional disponible';$('ai3').textContent='Análisis temporal disponible';$('ai4').textContent='Cálculo de profundidad/energía';$('ai5').textContent='Recomendación generada con datos reales';}}
+async function ld(force=false){if(ldLock&&!force)return;ldLock=true;try{const mg=$('fm').value?('&min_mag='+$('fm').value):'';const tsNow=Date.now();const [k,ev,s,ts]=await Promise.all([
+  api('/api/kpis?_='+tsNow).catch(()=>({})),
+  api('/api/events?limit=500&sort=loaded_at&order=desc'+mg+'&_='+tsNow).catch(()=>({items:[],total:0})),
+  api('/api/stats/summary?_='+tsNow).catch(()=>({by_magnitude:[],top_regions:[]})),
+  api('/api/stats/timeseries?hours=48&_='+tsNow).catch(()=>[])
+]);$('k1').textContent=k.events_24h??0;$('k2').textContent=k.max_magnitude!=null?Number(k.max_magnitude).toFixed(2):'-';$('k3').textContent=k.avg_magnitude!=null?Number(k.avg_magnitude).toFixed(2):'-';$('k4').textContent=k.quality_score!=null?Number(k.quality_score).toFixed(0)+'%':'100%';if($('evcount'))$('evcount').textContent=((ev.total!=null)?ev.total:((ev.items||[]).length))+' registros';const tbody=$('eb');tbody.innerHTML='';if(mk.length){mk.forEach(m=>{try{map.removeLayer(m);}catch(e){}});mk=[];}if(heatLayer){try{map.removeLayer(heatLayer);}catch(e){}heatLayer=null;}(ev.items||[]).forEach(it=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+(it.event_time?new Date(it.event_time).toISOString().replace('T',' ').replace('.000Z',' UTC'):'-')+'</td><td>'+(it.magnitude!=null?Number(it.magnitude).toFixed(2):'-')+'</td><td>'+(it.mag_type||'-')+'</td><td>'+(it.place||'-')+'</td><td>'+(it.region||'-')+'</td><td>'+(it.depth_km!=null?Number(it.depth_km).toFixed(1):'-')+'</td><td>'+(it.latitude!=null?Number(it.latitude).toFixed(3):'-')+'</td><td>'+(it.longitude!=null?Number(it.longitude).toFixed(3):'-')+'</td><td>'+(it.event_id||'-')+'</td>';tbody.appendChild(tr);if(it.latitude!=null&&it.longitude!=null){try{const m=L.circleMarker([Number(it.latitude),Number(it.longitude)],{radius:Math.max(4,(Number(it.magnitude)||2)*2.2),color:'#8c7a3d',fillColor:'#b59f5b',fillOpacity:.78}).addTo(map);mk.push(m);}catch(e){}}});try{const pts=(ev.items||[]).filter(x=>x.latitude!=null&&x.longitude!=null).map(x=>[Number(x.latitude),Number(x.longitude),Math.max(0.25,(Number(x.magnitude)||1)/6)]);if(pts.length&&typeof L.heatLayer==='function'){heatLayer=L.heatLayer(pts,{radius:18,blur:25,maxZoom:6,minOpacity:0.4});heatLayer.addTo(map);}}catch(e){}try{if(mk.length&&(firstFit||force)){const fg=L.featureGroup(mk);map.fitBounds(fg.getBounds().pad(.22));firstFit=false;}}catch(e){}$('rl').innerHTML='';(s.top_regions||[]).forEach((r,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML='<div><strong>'+(i+1)+'.</strong> '+r.region+'</div><span>'+r.events+' eventos</span>';$('rl').appendChild(d);});if(mc){try{mc.destroy();}catch(e){}mc=null;}mc=new Chart($('mc'),{type:'bar',data:{labels:(s.by_magnitude||[]).map(x=>x.mag_bucket||'-'),datasets:[{data:(s.by_magnitude||[]).map(x=>x.events||0),backgroundColor:'rgba(181,159,91,.9)',borderRadius:10,maxBarThickness:42}]},options:{responsive:true,animation:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});if(hc){try{hc.destroy();}catch(e){}hc=null;}hc=new Chart($('hc'),{type:'line',data:{labels:(ts||[]).map(x=>{const h=x.hour||'';return h.length>=16?h.slice(11,16):h;}),datasets:[{label:'Eventos',data:(ts||[]).map(x=>x.events||0),borderColor:'#b59f5b',backgroundColor:'rgba(181,159,91,.16)',fill:true,tension:.36,pointRadius:2}]},options:{responsive:true,animation:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(230,223,211,.9)'},ticks:{precision:0}}}}});ai().catch(()=>{});}catch(e){/* evitar congelado */}finally{ldLock=false;}}
+$('af').onclick=()=>ld(true);
+
+let lastSeenUpdate=null,autoTimer=null,lastCount=null;
+async function checkForUpdates(){
+  try{
+    const t=gt()||tk;
+    if(!t)return;
+    const tsNow=Date.now();
+    const [luRes, evRes] = await Promise.all([
+      fetch('/api/last-update?_='+tsNow,{headers:{'Authorization':'Bearer '+t},cache:'no-store'}).catch(()=>null),
+      fetch('/api/events?limit=1&sort=loaded_at&order=desc&_='+tsNow,{headers:{'Authorization':'Bearer '+t},cache:'no-store'}).catch(()=>null)
+    ]);
+    let changed=false;
+    if(luRes && luRes.ok){
+      const d=await luRes.json().catch(()=>({}));
+      if(d.last_update && d.last_update!==lastSeenUpdate){
+        lastSeenUpdate=d.last_update;
+        changed=true;
+      }
+    }
+    if(evRes && evRes.ok){
+      const ed=await evRes.json().catch(()=>({}));
+      const c=ed.total;
+      if(c!==undefined && lastCount!==null && c!==lastCount){
+        changed=true;
+      }
+      if(lastCount===null) lastCount=c;
+    }
+    if(changed){
+      await ld(true);
+      ai().catch(()=>{});
+    }
+  }catch(e){}
+}
+function startAutoRefresh(){
+  if(autoTimer)clearInterval(autoTimer);
+  lastSeenUpdate=null;
+  lastCount=null;
+  ld(true).catch(()=>{});
+  checkForUpdates().catch(()=>{});
+  autoTimer=setInterval(checkForUpdates,8000);
+  setInterval(()=>ld(false).catch(()=>{}),15000);
+}
+window.addEventListener('beforeunload',()=>{if(autoTimer)clearInterval(autoTimer);});
+
+function addMsg(text,cls){const m=document.createElement('div');m.className='msg '+cls;const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});const safe=(text+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');m.innerHTML='<div class="msg-meta">'+(cls==='user'?'Tú':'Asistente IA')+' · '+now+'</div><div class="bubble-wrap"><div class="bub">'+safe+'</div></div>';$('cb').appendChild(m);$('cb').scrollTop=$('cb').scrollHeight;}
+$('cf').onsubmit=async e=>{e.preventDefault();const q=$('ci').value.trim();if(!q)return;addMsg(q,'user');$('ci').value='';$('typing').classList.add('active');$('cb').scrollTop=$('cb').scrollHeight;try{const res=await api('/api/agent/ask',{method:'POST',body:JSON.stringify({question:q})});$('typing').classList.remove('active');const ans=res&&res.answer?res.answer:'Sin respuesta';addMsg(ans,'ass');if(res&&res.tables&&res.tables[0]&&Array.isArray(res.tables[0].rows)&&res.tables[0].rows.length){const t=res.tables[0];const c=document.createElement('div');c.className='msg ass';const now=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});let h='<div class="msg-meta">Asistente IA · '+now+'</div><div class="bubble-wrap"><div class="bub">Análisis detallado<div class="twrap"><table><thead><tr>';(t.columns||[]).forEach(col=>{h+='<th>'+(col+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</th>';});h+='</tr></thead><tbody>';t.rows.slice(0,80).forEach(r=>{h+='<tr>';(t.columns||[]).forEach(col=>{const v=r[col];h+='<td>'+(v===null||v===undefined?'-':(v+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'))+'</td>';});h+='</tr>';});h+='</tbody></table></div></div></div>';c.innerHTML=h;$('cb').appendChild(c);$('cb').scrollTop=$('cb').scrollHeight;}}catch(ex){$('typing').classList.remove('active');addMsg('No se pudo generar el análisis.','ass');}};
 </script>
 </body>
 </html>

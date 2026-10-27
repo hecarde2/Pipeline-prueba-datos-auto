@@ -91,10 +91,43 @@ def build_daily(day):
         "prompt_version": "v1-minio",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    # write
+    # write parquet
     buf = pa.BufferOutputStream()
     pq.write_table(pa.Table.from_pylist([report]), buf)
     s3.put_object(Bucket=g, Key=f"daily_reports/{daystr}.parquet", Body=buf.getvalue().to_pybytes())
+    # write markdown report
+    try:
+        md_lines = []
+        md_lines.append(f"# Reporte diario SismoWatch - {daystr}")
+        md_lines.append("")
+        md_lines.append(f"**Titular:** {headline}")
+        md_lines.append("")
+        md_lines.append("## Resumen")
+        md_lines.append(summary)
+        md_lines.append("")
+        md_lines.append("## Hechos clave")
+        md_lines.append(f"- Total de eventos: {count}")
+        md_lines.append(f"- Magnitud máxima: {maxm if maxm is not None else 'N/D'}")
+        md_lines.append(f"- Regiones con mayor actividad: {', '.join([r[0]+f' ({r[1]})' for r in top]) if top else 'N/D'}")
+        md_lines.append("")
+        md_lines.append("## Destacados")
+        for h in highlights:
+            if isinstance(h, dict):
+                md_lines.append(f"- **{h.get('title','')}**: {h.get('detail','')}")
+            else:
+                md_lines.append(f"- {h}")
+        md_lines.append("")
+        md_lines.append("## Datos")
+        md_lines.append("```json")
+        md_lines.append(json.dumps(facts, ensure_ascii=False, indent=2))
+        md_lines.append("```")
+        md_lines.append("")
+        md_lines.append(f"_Generado por: {generated_by}_ " + (f"| Modelo: {model}" if model else ""))
+        md_lines.append(f"_Fecha de generación: {datetime.now(timezone.utc).isoformat()}_")
+        md_content = "\n".join(md_lines).encode('utf-8')
+        s3.put_object(Bucket=g, Key=f"daily_reports/{daystr}.md", Body=md_content, ContentType='text/markdown')
+    except Exception:
+        pass
     # anomalies
     try:
         anom = [{"hour": datetime.now(timezone.utc).replace(minute=0,second=0,microsecond=0).isoformat(), "events": count, "baseline": float(count), "zscore": 0.0, "explanation": "Sin anomalía destacada", "detected_at": datetime.now(timezone.utc).isoformat()}]
