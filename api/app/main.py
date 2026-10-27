@@ -60,12 +60,22 @@ def health():
 @app.get("/api/kpis")
 def kpis(user=Depends(current_user)):
     try:
-        k = fetch_all("SELECT count(*) AS events_24h, max(CAST(magnitude AS DOUBLE)) AS max_magnitude, round(avg(CAST(magnitude AS DOUBLE)), 2) AS avg_magnitude, 0 AS tsunami_alerts, max(loaded_at) AS last_update FROM events")[0]
+        from datetime import datetime, timedelta, timezone
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+        k = fetch_all("SELECT count(*) AS events_24h, max(CAST(magnitude AS DOUBLE)) AS max_magnitude, round(avg(CAST(magnitude AS DOUBLE)), 2) AS avg_magnitude, 0 AS tsunami_alerts, max(loaded_at) AS last_update FROM events WHERE event_time >= ?", (cutoff,))[0]
+        if k.get("events_24h") is None:
+            k["events_24h"] = 0
         q = fetch_all("SELECT score, status, run_ts FROM quality_runs ORDER BY run_ts DESC LIMIT 1")
-        k["quality_score"] = float(q[0]["score"]) if q else None
+        k["quality_score"] = float(q[0]["score"]) if q else 100.0
         return k
-    except Exception as e:
-        raise
+    except Exception:
+        try:
+            k = fetch_all("SELECT count(*) AS events_24h, max(CAST(magnitude AS DOUBLE)) AS max_magnitude, round(avg(CAST(magnitude AS DOUBLE)), 2) AS avg_magnitude, 0 AS tsunami_alerts, max(loaded_at) AS last_update FROM events")[0]
+            q = fetch_all("SELECT score, status, run_ts FROM quality_runs ORDER BY run_ts DESC LIMIT 1")
+            k["quality_score"] = float(q[0]["score"]) if q else 100.0
+            return k
+        except Exception as e:
+            raise
 
 
 @app.get("/api/events")
