@@ -1,3 +1,7 @@
+link: 
+
+https://github.com/hecarde2/Pipeline-prueba-datos-auto.git
+
 # SismoWatch
 
 Plataforma de monitoreo sísmico en tiempo real con arquitectura **medallón** (Bronze / Silver / Gold) implementada sobre **PostgreSQL 16** (esquemas `bronze`, `silver` y `gold`). Complementada con **MinIO (S3-compatible)** como almacenamiento objeto para artefactos. Orquestada con **Apache Airflow**, expuesta mediante **FastAPI** con autenticación **JWT + RBAC**, visualizada con un frontend estático servido por **Nginx** y potenciada por un **agente IA local** con **Ollama + Qwen 2.5 Instruct**.
